@@ -156,9 +156,9 @@ fun TaskEditorDialog(initial: Task, onDismiss: () -> Unit, onSave: (Task) -> Uni
                     Button(
                         enabled = name.isNotBlank(),
                         onClick = {
+                            val repeat = if (repeats) Repeat((repeatEvery.toIntOrNull() ?: 1).coerceAtLeast(1), repeatUnit) else null
+                            val scheduleChanged = deadline != initial.deadline || repeat != initial.repeat
                             onSave(
-                                val repeat = if (repeats) Repeat((repeatEvery.toIntOrNull() ?: 1).coerceAtLeast(1), repeatUnit) else null
-                                val scheduleChanged = deadline != initial.deadline || repeat != initial.repeat
                                 initial.copy(name = name.trim(), description = description.trim())
                                     .let { if (scheduleChanged) it.withSchedule(deadline, repeat) else it }
                                     .withProgress(progress.roundToInt(), System.currentTimeMillis())
