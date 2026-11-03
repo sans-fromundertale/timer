@@ -23,7 +23,7 @@ class AlarmReceiver : BroadcastReceiver() {
             when (slot.host) {
                 "timer" -> g.timer.onZeroAlarm(scheduledFor)
                 "day" -> g.timer.sync()
-                "task" -> slot.lastPathSegment?.toLongOrNull()?.let { g.tasks.onReminderAlarm(it, scheduledFor) }
+                "task" -> slot.lastPathSegment?.toLongOrNull()?.let { g.tasks.onAlarm(it, scheduledFor) }
             }
         }
     }

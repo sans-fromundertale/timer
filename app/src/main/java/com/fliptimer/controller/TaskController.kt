@@ -7,8 +7,12 @@ import com.fliptimer.system.Notifications
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
+import java.time.ZoneId
 
-/** Task changes plus their reminder alarms. Each task holds at most one pending alarm: its next reminder. */
+/**
+ * Task changes plus their alarms. Each task holds at most one pending alarm: the next moment it
+ * needs attention (a reminder, or a recurring task's deadline, when it resets).
+ */
 class TaskController(
     private val repo: TaskRepository,
     private val alarms: Alarms,
@@ -18,7 +22,7 @@ class TaskController(
     val tasks: Flow<List<Task>> = repo.tasks
 
     fun save(task: Task) {
-        scope.launch { schedule(repo.save(task)) }
+        scope.launch { refresh(repo.save(task), System.currentTimeMillis()) }
     }
 
     fun setProgress(task: Task, percent: Int) = save(task.withProgress(percent, System.currentTimeMillis()))
@@ -34,18 +38,26 @@ class TaskController(
         scope.launch { repo.deleteCompleted().forEach(::forget) }
     }
 
-    suspend fun syncAll() = repo.all().forEach { schedule(it) }
-
-    suspend fun onReminderAlarm(id: Long, scheduledFor: Long) {
-        val task = repo.get(id) ?: return
-        val due = task.nextReminder(scheduledFor - 1)
-        if (due != null && due.at == scheduledFor) notifications.showTaskReminder(task, due.preset)
-        schedule(task, after = maxOf(System.currentTimeMillis(), scheduledFor))
+    /** App open, boot, update: reset any recurring tasks whose deadline passed, and rebuild alarms. */
+    suspend fun syncAll() {
+        val now = System.currentTimeMillis()
+        repo.all().forEach { refresh(it, now) }
     }
 
-    private fun schedule(task: Task, after: Long = System.currentTimeMillis()) {
-        val next = task.nextReminder(after)
-        if (next != null) alarms.set(Alarms.task(task.id), next.at) else alarms.cancel(Alarms.task(task.id))
+    suspend fun onAlarm(id: Long, scheduledFor: Long) {
+        val task = repo.get(id) ?: return
+        // Reminder first, so a recurring task's "due now" still shows before it resets.
+        val due = task.nextReminder(scheduledFor - 1)
+        if (due != null && due.at == scheduledFor) notifications.showTaskReminder(task, due.preset)
+        refresh(task, maxOf(System.currentTimeMillis(), scheduledFor))
+    }
+
+    /** Applies any pending reset, saves it, and sets the task's next alarm. */
+    private suspend fun refresh(task: Task, now: Long) {
+        val current = task.rolledOver(now, ZoneId.systemDefault())
+        if (current != task) repo.save(current)
+        val next = current.nextAlarm(now)
+        if (next != null) alarms.set(Alarms.task(current.id), next) else alarms.cancel(Alarms.task(current.id))
     }
 
     private fun forget(id: Long) {

@@ -36,7 +36,7 @@ import androidx.compose.ui.unit.sp
 import com.fliptimer.core.Task
 import com.fliptimer.core.TaskLists
 import com.fliptimer.core.TimerState
-import com.fliptimer.core.formatCountdown
+import com.fliptimer.core.formatDeadlineClock
 import com.fliptimer.core.formatMillis
 import com.fliptimer.graph
 import kotlin.math.abs
@@ -126,19 +126,20 @@ private fun DueSoon(due: List<Task>, now: Long, onOpenTasks: () -> Unit) {
         due.take(MAX_DUE_SOON).forEach { t ->
             val remaining = t.remaining(now)!!
             Row(
-                Modifier.fillMaxWidth().clickable(onClick = onOpenTasks).padding(vertical = 6.dp),
+                Modifier.fillMaxWidth().clickable(onClick = onOpenTasks).padding(vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
                     t.name,
                     modifier = Modifier.weight(1f).padding(end = 12.dp),
+                    style = MaterialTheme.typography.bodyLarge,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
                 Text(
-                    formatCountdown(remaining),
+                    formatDeadlineClock(remaining),
                     color = if (remaining < 0) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
-                    style = TextStyle(fontFeatureSettings = "tnum"),
+                    style = MaterialTheme.typography.titleLarge.copy(fontFeatureSettings = "tnum"),
                 )
             }
         }

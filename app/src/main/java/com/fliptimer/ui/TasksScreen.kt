@@ -46,8 +46,9 @@ import androidx.compose.ui.unit.dp
 import com.fliptimer.core.Task
 import com.fliptimer.core.TaskLists
 import com.fliptimer.core.TaskLists.DUE_SOON_WINDOW_MS
-import com.fliptimer.core.formatDuration
+import com.fliptimer.core.formatDeadlineClock
 import com.fliptimer.graph
+import kotlin.math.abs
 
 @Composable
 fun TasksScreen() {
@@ -164,7 +165,7 @@ private fun TaskCard(task: Task, now: Long, actions: TaskCardActions) {
                     style = MaterialTheme.typography.titleMedium,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
-                    textDecoration = if (task.isComplete) TextDecoration.LineThrough else null,
+                    textDecoration = if (task.isComplete && !task.isRecurring) TextDecoration.LineThrough else null,
                 )
                 Box {
                     IconButton(onClick = { menuOpen = true }) {
@@ -187,6 +188,7 @@ private fun TaskCard(task: Task, now: Long, actions: TaskCardActions) {
                 }
             }
             Column(Modifier.padding(end = 12.dp)) {
+                DeadlineCountdown(task, now)
                 if (task.description.isNotBlank()) {
                     Text(
                         task.description,
@@ -202,39 +204,49 @@ private fun TaskCard(task: Task, now: Long, actions: TaskCardActions) {
                     Spacer(Modifier.width(12.dp))
                     Text("${task.progress}%", style = MaterialTheme.typography.labelMedium)
                 }
-                DeadlineLine(task, now)
+                if (task.isComplete && !task.isRecurring) {
+                    task.completedAt?.let {
+                        Spacer(Modifier.height(8.dp))
+                        Text(
+                            "Completed ${formatDate(it)}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
             }
         }
     }
 }
 
+/** The live countdown: the main thing on a card with a deadline. */
 @Composable
-private fun DeadlineLine(task: Task, now: Long) {
-    val text: String
-    val urgent: Boolean
-    when {
-        task.isComplete -> {
-            text = task.completedAt?.let { "Completed ${formatDate(it)}" } ?: return
-            urgent = false
-        }
-        task.deadline == null -> return
-        else -> {
-            val remaining = task.deadline - now
-            text = if (remaining >= 0) "Due ${formatDateTime(task.deadline)} · ${formatDuration(remaining)} left"
-            else "Overdue by ${formatDuration(-remaining)} · was due ${formatDateTime(task.deadline)}"
-            urgent = remaining <= DUE_SOON_WINDOW_MS
-        }
+private fun DeadlineCountdown(task: Task, now: Long) {
+    val deadline = task.deadline ?: return
+    if (task.isComplete && !task.isRecurring) return
+    val remaining = deadline - now
+
+    val label = when {
+        task.isComplete -> "Done · resets in"
+        remaining < 0 -> "Overdue by"
+        else -> "Due in"
     }
-    Spacer(Modifier.height(8.dp))
+    val color = when {
+        task.isComplete -> MaterialTheme.colorScheme.onSurfaceVariant
+        remaining < 0 -> MaterialTheme.colorScheme.error
+        remaining <= DUE_SOON_WINDOW_MS -> MaterialTheme.colorScheme.primary
+        else -> MaterialTheme.colorScheme.onSurface
+    }
+    val details = listOfNotNull(formatDateTime(deadline), task.repeat?.label).joinToString(" · ")
+
+    Text(label, style = MaterialTheme.typography.labelMedium, color = color)
     Text(
-        text,
-        style = MaterialTheme.typography.bodySmall,
-        color = when {
-            !urgent -> MaterialTheme.colorScheme.onSurfaceVariant
-            (task.deadline ?: 0) < now -> MaterialTheme.colorScheme.error
-            else -> MaterialTheme.colorScheme.primary
-        },
+        formatDeadlineClock(abs(remaining)),
+        color = color,
+        style = MaterialTheme.typography.headlineMedium.copy(fontFeatureSettings = "tnum"),
     )
+    Text(details, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    Spacer(Modifier.height(12.dp))
 }
 
 @Composable

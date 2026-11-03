@@ -21,21 +21,16 @@ fun formatMillis(millis: Long): String = formatSeconds(displaySeconds(millis))
 fun formatSignedMillis(millis: Long): String =
     if (displaySeconds(millis) > 0) "+" + formatMillis(millis) else formatMillis(millis)
 
-/** Human duration for deadlines: "2d 4h", "5h 12m", "12m 30s", "45s". Negative is treated as 0. */
-fun formatDuration(millis: Long): String {
-    val total = maxOf(0L, millis) / 1000
-    val d = total / 86_400
-    val h = (total % 86_400) / 3600
-    val m = (total % 3600) / 60
-    val s = total % 60
-    return when {
-        d > 0 -> "${d}d ${h}h"
-        h > 0 -> "${h}h ${m}m"
-        m > 0 -> "${m}m ${s}s"
-        else -> "${s}s"
-    }
+/**
+ * Deadline countdown with seconds: "2d 04:13:22", "4:13:22", "0:00:09".
+ * Overdue times get a leading "−". Rounds up before the deadline so it reads 0:00:00 exactly at it.
+ */
+fun formatDeadlineClock(remainingMillis: Long): String {
+    val secs = if (remainingMillis >= 0) displaySeconds(remainingMillis) else -remainingMillis / 1000
+    val sign = if (remainingMillis < 0 && secs > 0) "−" else ""
+    val d = secs / 86_400
+    val h = (secs % 86_400) / 3600
+    val m = (secs % 3600) / 60
+    val s = secs % 60
+    return if (d > 0) "%s%dd %02d:%02d:%02d".format(sign, d, h, m, s) else "%s%d:%02d:%02d".format(sign, h, m, s)
 }
-
-/** "5h 12m" before the deadline, "overdue 3h 4m" after it. */
-fun formatCountdown(remainingMillis: Long): String =
-    if (remainingMillis >= 0) formatDuration(remainingMillis) else "overdue ${formatDuration(-remainingMillis)}"

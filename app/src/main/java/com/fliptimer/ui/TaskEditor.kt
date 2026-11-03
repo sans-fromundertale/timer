@@ -12,12 +12,14 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -40,6 +42,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.fliptimer.core.ReminderPreset
+import com.fliptimer.core.Repeat
+import com.fliptimer.core.RepeatUnit
 import com.fliptimer.core.Task
 import java.time.Instant
 import java.time.LocalDate
@@ -60,6 +64,9 @@ fun TaskEditorDialog(initial: Task, onDismiss: () -> Unit, onSave: (Task) -> Uni
     var description by remember { mutableStateOf(initial.description) }
     var progress by remember { mutableFloatStateOf(initial.progress.toFloat()) }
     var deadline by remember { mutableStateOf(initial.deadline) }
+    var repeats by remember { mutableStateOf(initial.repeat != null) }
+    var repeatEvery by remember { mutableStateOf((initial.repeat?.every ?: 1).toString()) }
+    var repeatUnit by remember { mutableStateOf(initial.repeat?.unit ?: RepeatUnit.WEEKS) }
 
     fun zoned(ms: Long): ZonedDateTime = Instant.ofEpochMilli(ms).atZone(zone)
 
@@ -116,6 +123,31 @@ fun TaskEditorDialog(initial: Task, onDismiss: () -> Unit, onSave: (Task) -> Uni
                         OutlinedButton(onClick = ::pickDate) { Text(formatDate(d)) }
                         OutlinedButton(onClick = ::pickTime) { Text(formatTime(d)) }
                     }
+                    Spacer(Modifier.height(16.dp))
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Column(Modifier.weight(1f)) {
+                            Text("Repeat", style = MaterialTheme.typography.titleSmall)
+                            Text(
+                                "Stays done until the deadline, then resets with a new one",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                        Switch(checked = repeats, onCheckedChange = { repeats = it })
+                    }
+                    if (repeats) {
+                        Spacer(Modifier.height(8.dp))
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Text("Every")
+                            NumberField(repeatEvery, { repeatEvery = it }, "", Modifier.width(72.dp))
+                        }
+                        Spacer(Modifier.height(4.dp))
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            RepeatUnit.entries.forEach { u ->
+                                FilterChip(selected = repeatUnit == u, onClick = { repeatUnit = u }, label = { Text(u.plural) })
+                            }
+                        }
+                    }
                 }
                 Spacer(Modifier.height(32.dp))
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
@@ -125,7 +157,10 @@ fun TaskEditorDialog(initial: Task, onDismiss: () -> Unit, onSave: (Task) -> Uni
                         enabled = name.isNotBlank(),
                         onClick = {
                             onSave(
-                                initial.copy(name = name.trim(), description = description.trim(), deadline = deadline)
+                                val repeat = if (repeats) Repeat((repeatEvery.toIntOrNull() ?: 1).coerceAtLeast(1), repeatUnit) else null
+                                val scheduleChanged = deadline != initial.deadline || repeat != initial.repeat
+                                initial.copy(name = name.trim(), description = description.trim())
+                                    .let { if (scheduleChanged) it.withSchedule(deadline, repeat) else it }
                                     .withProgress(progress.roundToInt(), System.currentTimeMillis())
                             )
                         },

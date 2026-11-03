@@ -7,6 +7,7 @@ import com.fliptimer.controller.TaskController
 import com.fliptimer.controller.TimerController
 import com.fliptimer.data.AppDatabase
 import com.fliptimer.data.DayLogRepository
+import com.fliptimer.data.MIGRATION_1_2
 import com.fliptimer.data.TaskRepository
 import com.fliptimer.data.TimerStore
 import com.fliptimer.system.Alarms
@@ -31,7 +32,9 @@ class AppGraph(app: Application) {
     val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
     private val db: AppDatabase =
-        Room.databaseBuilder(app, AppDatabase::class.java, "fliptimer.db").build()
+        Room.databaseBuilder(app, AppDatabase::class.java, "fliptimer.db")
+            .addMigrations(MIGRATION_1_2)
+            .build()
 
     val notifications = Notifications(app)
     private val alarms = Alarms(app)

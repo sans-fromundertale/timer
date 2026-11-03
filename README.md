@@ -48,6 +48,10 @@ FlipTimerApp Wires everything together once (AppGraph).
 - **Task reminders:** each task keeps one alarm, for its next reminder. When it
   fires, the next one is scheduled. Defaults: 24h, 6h, 1h before, and at the
   deadline; change them per task under ⋮ → Reminders.
+- **Repeating tasks:** a repeating task stays done until its deadline, then resets
+  to 0% with the next deadline. It resets at the deadline even if unfinished.
+  Deadlines step in local time from a fixed starting point, so "monthly on the
+  31st" stays on month-ends and 9 AM stays 9 AM across daylight saving.
 
 ## Testing checklist
 Timer
@@ -65,6 +69,14 @@ Tasks
 - [ ] Clear all completed asks for confirmation, then removes them
 - [ ] Overdue task shows red "overdue …" on both pages
 - [ ] Restart the phone: task reminders still arrive
+
+Repeating tasks and countdowns
+- [ ] Existing tasks survived the update (database migration)
+- [ ] Every task with a deadline shows a large live d/h/m/s countdown
+- [ ] Make a task repeat daily, due in 3 minutes, mark it complete: it shows "Done · resets in"
+- [ ] At the deadline it resets to 0% with tomorrow's deadline
+- [ ] Repeating task left unfinished: "due now" reminder, then it resets
+- [ ] "Clear all" completed never deletes repeating tasks
 
 History
 - [ ] The day after installing, yesterday's ending value appears
