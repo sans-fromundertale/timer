@@ -2,6 +2,7 @@ plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
     id("org.jetbrains.kotlin.plugin.compose")
+    id("com.google.devtools.ksp")
 }
 
 android {
@@ -12,8 +13,18 @@ android {
         applicationId = "com.fliptimer"
         minSdk = 26
         targetSdk = 34
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = 2
+        versionName = "2.0"
+    }
+
+    // A fixed key, so each new build installs as an update and keeps your data.
+    signingConfigs {
+        getByName("debug") {
+            storeFile = file("flip-debug.keystore")
+            storePassword = "android"
+            keyAlias = "androiddebugkey"
+            keyPassword = "android"
+        }
     }
 
     compileOptions {
@@ -29,8 +40,15 @@ dependencies {
     implementation(composeBom)
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.material3:material3")
+    implementation("androidx.compose.material:material-icons-core")
     implementation("androidx.activity:activity-compose:1.9.2")
     implementation("androidx.core:core-ktx:1.13.1")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
+
+    val room = "2.6.1"
+    implementation("androidx.room:room-runtime:$room")
+    implementation("androidx.room:room-ktx:$room")
+    ksp("androidx.room:room-compiler:$room")
+
     testImplementation("junit:junit:4.13.2")
 }

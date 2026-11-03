@@ -1,0 +1,4 @@
+<resources>
+    <!-- Mostly drawn by Compose; this mainly themes the date and time pickers. -->
+    <style name="AppTheme" parent="android:Theme.Material.Light.NoActionBar" />
+</resources>

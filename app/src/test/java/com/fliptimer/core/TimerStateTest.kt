@@ -69,13 +69,11 @@ class TimerStateTest {
         assertEquals(true, s.isAtRest)
     }
 
-    @Test fun formatting() {
-        assertEquals("5:00", formatMillis(fiveMin))
-        assertEquals("0:01", formatMillis(1))
-        assertEquals("0:00", formatMillis(0))
-        assertEquals("0:00", formatMillis(-999))
-        assertEquals("−0:01", formatMillis(-1_000))
-        assertEquals("1:02:03", formatSeconds(3723))
-        assertEquals("−1:02:03", formatSeconds(-3723))
+    @Test fun negativeStartCountsTowardZero() {
+        val s = TimerState(direction = TimerState.UP).setInitial(-60_000).start(t0)
+        assertEquals(-30_000L, s.valueAt(t0 + 30_000))
+        assertEquals(t0 + 60_000, s.nextZeroCrossing(t0))
+        assertEquals(false, s.isAtRest)
+        assertEquals(true, s.reset().isAtRest)
     }
 }

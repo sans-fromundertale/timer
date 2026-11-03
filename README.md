@@ -1,54 +1,73 @@
 # Flip Timer
 
-A timer that flips between counting up and counting down without resetting,
-and alerts you every time it crosses 0:00. Runs fully offline.
+A productivity timer that flips between counting up and counting down without
+resetting, alerts you every time it crosses 0:00, tracks tasks with deadlines,
+and logs where each day ended. Runs fully offline.
 
-## Build with GitHub (no install needed)
-1. Create a new GitHub repo and push this folder to it:
-   ```
-   git init && git add . && git commit -m "Flip Timer"
-   git branch -M main
-   git remote add origin https://github.com/<you>/flip-timer.git
-   git push -u origin main
-   ```
-2. Open the repo's **Actions** tab and wait for "Build APK" to finish (~5 min).
-3. Open the run, download **FlipTimer-apk**, and unzip it.
-4. Get `app-debug.apk` onto your phone and open it. Allow "install unknown apps" when asked.
+## Updating from version 1
+Version 1 builds were signed with a random key each time. This version uses a
+fixed key (`app/flip-debug.keystore`), so **uninstall version 1 once**, then install
+this. Every future build installs as a normal update and keeps your data.
+Keep the repo private if you'd rather not publish the key.
 
-Each CI build is signed with a fresh debug key, so to install a new build
-you'll need to uninstall the old one first.
+The workflow file lives in the hidden `.github` folder. If you upload through
+the GitHub website, check it made it (or recreate it as before).
+
+## Install
+Every push to `main` runs the unit tests, builds, and publishes a Release.
+On your phone, open the repo's **Releases** page, tap the latest
+`FlipTimer.apk`, and install it.
 
 ## Build with Android Studio
-Open this folder, let Gradle sync, plug in your phone with USB debugging on, and press Run.
+Open the folder, let Gradle sync, plug in your phone, press Run.
+
+## Code layout
+```
+core/        Pure Kotlin logic, no Android. Fully unit-tested.
+  TimerState    timer as a line: value = base + direction × elapsed
+  Task          tasks, progress, completion, list ordering
+  Reminders     reminder presets and "next reminder" calculation
+  DayLog        which day-end values still need recording
+  TimeFormat    all display formatting
+data/        Storage. Room database for tasks and day log; prefs for the timer.
+system/      Android plumbing: one alarm helper, notifications, broadcast receivers.
+controller/  The only places state changes. Each change saves, then refreshes
+             alarms and notifications, so those can never drift out of sync.
+ui/          Compose screens: Timer, Tasks, History.
+FlipTimerApp Wires everything together once (AppGraph).
+```
 
 ## How it works
-- The timer is one signed value plus a direction. Flip reverses the direction without resetting.
-- It keeps going past zero; negative time shows in red.
-- The live time is shown in a notification drawn by Android itself, so nothing
-  needs to keep running in the background.
-- An exact alarm is scheduled for the next zero crossing and rescheduled on every
-  Start, Pause or Flip. Timer state is saved, and it's restored after a reboot.
+- **Timer:** one signed value plus a direction. The notification's live clock is
+  drawn by Android, so nothing runs in the background. An exact alarm is set
+  for the next zero crossing whenever the timer changes.
+- **Day log:** before every timer change (and at midnight), the app records the
+  value the timer had at each midnight since the last record. Because the timer
+  moves in a straight line between changes, this is exact even if the phone
+  was off at midnight.
+- **Task reminders:** each task keeps one alarm, for its next reminder. When it
+  fires, the next one is scheduled. Defaults: 24h, 6h, 1h before, and at the
+  deadline; change them per task under ⋮ → Reminders.
 
 ## Testing checklist
-Basics
-- [ ] Set 0:10, Start: counts down, alert at 0:00, keeps going into red negative time
-- [ ] Flip mid-countdown: direction changes, number doesn't jump
-- [ ] Flip in negative time: counts back up, alerts again at 0:00
-- [ ] Pause, then Resume: continues from the same value
-- [ ] Flip while paused, then Resume: goes the new direction
-- [ ] Reset: back to start time, notification disappears
+Timer
+- [ ] Start time dialog: set −0:30 (Negative chip), Start, then Flip so it counts up: alert at 0:00
+- [ ] Earlier checks still pass: flip without jumping, alerts in the background, notification buttons
 
-In the background
-- [ ] Start, go to home screen: notification shows live time and buttons
-- [ ] Pause / Flip / Reset from the notification: app matches when reopened
-- [ ] Lock the phone with ~30s left: alert sounds and vibrates at 0:00
-- [ ] Leave the screen off for 5+ minutes before a crossing: alert still on time
-- [ ] Swipe the app out of recents mid-run: notification and alert still work
-- [ ] Restart the phone mid-run: notification comes back after unlock, time is correct
+Tasks
+- [ ] Add a task with no deadline, and one due in ~2 hours
+- [ ] The 2-hour task shows on the Timer page with a live countdown; the other doesn't
+- [ ] Set a task due in ~70 minutes: 1-hour reminder arrives ~10 minutes later
+- [ ] Reminders… menu: turn on "15 minutes before" for a task due in 20 min, it fires
+- [ ] Edit a deadline after a reminder was scheduled: old reminder doesn't fire
+- [ ] Slide progress to 100%: task moves to Completed, its reminders stop
+- [ ] Reopen from the ⋮ menu: back in the active list
+- [ ] Clear all completed asks for confirmation, then removes them
+- [ ] Overdue task shows red "overdue …" on both pages
+- [ ] Restart the phone: task reminders still arrive
 
-Edge cases
-- [ ] Flip rapidly around zero: alert each time it actually crosses, no duplicates
-- [ ] Deny notifications: app shows a warning with a button to turn them on
-- [ ] Silent / Do Not Disturb mode: note what happens (alerts use the alarm sound stream)
+History
+- [ ] The day after installing, yesterday's ending value appears
+- [ ] Leave the timer running overnight: logged value matches what it read at midnight
 
 Please report your phone model and Android version with any bugs.
