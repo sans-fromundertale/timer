@@ -5,12 +5,10 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
-import android.content.Intent
 import android.content.pm.PackageManager
 import android.media.AudioAttributes
 import android.media.RingtoneManager
 import android.os.Build
-import android.os.SystemClock
 import android.view.View
 import android.widget.RemoteViews
 import androidx.core.app.NotificationCompat
@@ -21,7 +19,6 @@ import com.fliptimer.core.ReminderPreset
 import com.fliptimer.core.Task
 import com.fliptimer.core.TimerState
 import com.fliptimer.core.formatMillis
-import com.fliptimer.ui.MainActivity
 import com.fliptimer.ui.Tab
 
 class Notifications(private val context: Context) {
@@ -66,8 +63,7 @@ class Notifications(private val context: Context) {
         val dirLabel = if (s.direction == TimerState.DOWN) "Counting down" else "Counting up"
         val views = RemoteViews(context.packageName, R.layout.notification_timer)
         if (s.running) {
-            // Chronometer works in elapsedRealtime; translate the wall-clock zero time.
-            val zeroElapsed = SystemClock.elapsedRealtime() + (s.zeroTime()!! - now)
+            val zeroElapsed = TimerActions.chronometerBase(s.zeroTime()!!, now)
             views.setViewVisibility(R.id.chrono, View.VISIBLE)
             views.setViewVisibility(R.id.paused_time, View.GONE)
             views.setChronometer(R.id.chrono, zeroElapsed, null, true)
@@ -93,10 +89,10 @@ class Notifications(private val context: Context) {
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .setContentIntent(openApp(Tab.Timer))
 
-        if (s.running) b.addAction(0, "Pause", timerAction(ACTION_PAUSE))
-        else b.addAction(0, "Resume", timerAction(ACTION_RESUME))
-        b.addAction(0, "Flip", timerAction(ACTION_FLIP))
-        b.addAction(0, "Reset", timerAction(ACTION_RESET))
+        if (s.running) b.addAction(0, "Pause", TimerActions.pendingIntent(context, TimerActions.PAUSE))
+        else b.addAction(0, "Resume", TimerActions.pendingIntent(context, TimerActions.RESUME))
+        b.addAction(0, "Flip", TimerActions.pendingIntent(context, TimerActions.FLIP))
+        b.addAction(0, "Reset", TimerActions.pendingIntent(context, TimerActions.RESET))
         post(ID_TIMER, b)
     }
 
@@ -143,21 +139,7 @@ class Notifications(private val context: Context) {
 
     private fun taskId(id: Long): Int = ID_TASK_BASE + (id % 1_000_000).toInt()
 
-    private fun openApp(tab: Tab): PendingIntent =
-        PendingIntent.getActivity(
-            context, tab.ordinal,
-            Intent(context, MainActivity::class.java)
-                .putExtra(MainActivity.EXTRA_TAB, tab.name)
-                .addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP),
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
-        )
-
-    private fun timerAction(action: String): PendingIntent =
-        PendingIntent.getBroadcast(
-            context, action.hashCode(),
-            Intent(context, TimerActionReceiver::class.java).setAction(action),
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
-        )
+    private fun openApp(tab: Tab): PendingIntent = TimerActions.openApp(context, tab)
 
     companion object {
         private const val CH_TIMER = "timer"
@@ -167,27 +149,11 @@ class Notifications(private val context: Context) {
         private const val ID_ZERO = 2
         private const val ID_TASK_BASE = 1000
 
-        private const val ACTION_PAUSE = "com.fliptimer.PAUSE"
-        private const val ACTION_RESUME = "com.fliptimer.RESUME"
-        private const val ACTION_FLIP = "com.fliptimer.FLIP"
-        private const val ACTION_RESET = "com.fliptimer.RESET"
-
         private val VIBRATION = longArrayOf(0, 400, 200, 400, 200, 400)
 
         fun canPost(context: Context): Boolean =
             Build.VERSION.SDK_INT < 33 ||
                 ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) ==
                 PackageManager.PERMISSION_GRANTED
-
-        /** Maps a notification button to the timer change it makes. */
-        fun timerTransform(action: String): (TimerState, Long) -> TimerState = { s, now ->
-            when (action) {
-                ACTION_PAUSE -> s.pause(now)
-                ACTION_RESUME -> s.start(now)
-                ACTION_FLIP -> s.flip(now)
-                ACTION_RESET -> s.reset()
-                else -> s
-            }
-        }
     }
 }

@@ -53,6 +53,12 @@ FlipTimerApp Wires everything together once (AppGraph).
   Deadlines step in local time from a fixed starting point, so "monthly on the
   31st" stays on month-ends and 9 AM stays 9 AM across daylight saving.
 
+## Home screen widget
+Long-press the home screen → Widgets → Flip Timer. It shows the live timer,
+Start/Pause, Flip and Reset, and up to 3 tasks due within 24 hours. Its clocks
+are drawn by Android, so it only gets redrawn when something actually changes
+(a button press, a zero crossing, a task entering the 24-hour window or going overdue).
+
 ## Testing checklist
 Timer
 - [ ] Start time dialog: set −0:30 (Negative chip), Start, then Flip so it counts up: alert at 0:00
@@ -77,6 +83,14 @@ Repeating tasks and countdowns
 - [ ] At the deadline it resets to 0% with tomorrow's deadline
 - [ ] Repeating task left unfinished: "due now" reminder, then it resets
 - [ ] "Clear all" completed never deletes repeating tasks
+
+Widget
+- [ ] Add it from the widget picker; it shows the current timer and due-soon tasks
+- [ ] Start / Pause / Flip / Reset on the widget: the app and notification match
+- [ ] Timer number turns red when it crosses zero into negative time
+- [ ] Add a task due in 30 minutes in the app: it appears on the widget
+- [ ] Task due in 24h 2m: appears on the widget about 2 minutes later
+- [ ] Restart the phone: widget clocks are still correct
 
 History
 - [ ] The day after installing, yesterday's ending value appears

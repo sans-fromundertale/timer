@@ -33,7 +33,7 @@ class AlarmReceiver : BroadcastReceiver() {
 class TimerActionReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         val action = intent.action ?: return
-        runAsync(context) { context.graph.timer.perform(Notifications.timerTransform(action)) }
+        runAsync(context) { context.graph.timer.perform(TimerActions.transform(action)) }
     }
 }
 

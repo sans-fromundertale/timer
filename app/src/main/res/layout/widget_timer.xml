@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/widget_bg"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <LinearLayout
+        android:id="@+id/w_timer_area"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_horizontal"
+        android:orientation="vertical">
+        <TextView
+            android:id="@+id/w_direction"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="▼ Counting down"
+            android:textColor="@color/widget_accent"
+            android:textSize="13sp" />
+        <Chronometer
+            android:id="@+id/w_chrono"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontFeatureSettings="tnum"
+            android:textColor="@color/widget_text"
+            android:textSize="44sp"
+            android:visibility="gone" />
+        <TextView
+            android:id="@+id/w_paused"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontFeatureSettings="tnum"
+            android:text="5:00"
+            android:textColor="@color/widget_text"
+            android:textSize="44sp" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:orientation="horizontal">
+        <Button
+            android:id="@+id/w_start_pause"
+            android:layout_width="0dp"
+            android:layout_height="40dp"
+            android:layout_weight="1"
+            android:layout_marginHorizontal="4dp"
+            android:background="@drawable/widget_button"
+            android:minHeight="0dp"
+            android:padding="0dp"
+            android:text="Start"
+            android:textAllCaps="false"
+            android:textColor="@color/widget_text"
+            android:textSize="14sp" />
+        <Button
+            android:id="@+id/w_flip"
+            android:layout_width="0dp"
+            android:layout_height="40dp"
+            android:layout_weight="1"
+            android:layout_marginHorizontal="4dp"
+            android:background="@drawable/widget_button"
+            android:minHeight="0dp"
+            android:padding="0dp"
+            android:text="Flip"
+            android:textAllCaps="false"
+            android:textColor="@color/widget_text"
+            android:textSize="14sp" />
+        <Button
+            android:id="@+id/w_reset"
+            android:layout_width="0dp"
+            android:layout_height="40dp"
+            android:layout_weight="1"
+            android:layout_marginHorizontal="4dp"
+            android:background="@drawable/widget_button"
+            android:minHeight="0dp"
+            android:padding="0dp"
+            android:text="Reset"
+            android:textAllCaps="false"
+            android:textColor="@color/widget_text"
+            android:textSize="14sp" />
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/w_due_header"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:text="Due within 24 hours"
+        android:textColor="@color/widget_subtle"
+        android:textSize="12sp"
+        android:visibility="gone" />
+
+    <LinearLayout
+        android:id="@+id/w_task1"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingVertical="2dp"
+        android:visibility="gone">
+        <TextView
+            android:id="@+id/w_task1_name"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginEnd="8dp"
+            android:singleLine="true"
+            android:ellipsize="end"
+            android:textColor="@color/widget_text"
+            android:textSize="14sp" />
+        <Chronometer
+            android:id="@+id/w_task1_clock"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontFeatureSettings="tnum"
+            android:textColor="@color/widget_accent"
+            android:textSize="17sp" />
+    </LinearLayout>
+    <LinearLayout
+        android:id="@+id/w_task2"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingVertical="2dp"
+        android:visibility="gone">
+        <TextView
+            android:id="@+id/w_task2_name"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginEnd="8dp"
+            android:singleLine="true"
+            android:ellipsize="end"
+            android:textColor="@color/widget_text"
+            android:textSize="14sp" />
+        <Chronometer
+            android:id="@+id/w_task2_clock"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontFeatureSettings="tnum"
+            android:textColor="@color/widget_accent"
+            android:textSize="17sp" />
+    </LinearLayout>
+    <LinearLayout
+        android:id="@+id/w_task3"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingVertical="2dp"
+        android:visibility="gone">
+        <TextView
+            android:id="@+id/w_task3_name"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginEnd="8dp"
+            android:singleLine="true"
+            android:ellipsize="end"
+            android:textColor="@color/widget_text"
+            android:textSize="14sp" />
+        <Chronometer
+            android:id="@+id/w_task3_clock"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontFeatureSettings="tnum"
+            android:textColor="@color/widget_accent"
+            android:textSize="17sp" />
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/w_more"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="@color/widget_subtle"
+        android:textSize="12sp"
+        android:visibility="gone" />
+</LinearLayout>

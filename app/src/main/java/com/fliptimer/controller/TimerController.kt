@@ -6,6 +6,7 @@ import com.fliptimer.data.DayLogRepository
 import com.fliptimer.data.TimerStore
 import com.fliptimer.system.Alarms
 import com.fliptimer.system.Notifications
+import com.fliptimer.system.WidgetUpdater
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -19,6 +20,7 @@ class TimerController(
     private val dayLog: DayLogRepository,
     private val alarms: Alarms,
     private val notifications: Notifications,
+    private val widgets: WidgetUpdater,
     private val scope: CoroutineScope,
 ) {
     private val mutex = Mutex()
@@ -41,14 +43,17 @@ class TimerController(
     suspend fun sync() = perform { s, _ -> s }
 
     suspend fun onZeroAlarm(scheduledFor: Long) {
-        if (store.state.value.zeroTime() == scheduledFor) notifications.showZeroAlert(store.state.value)
+        if (store.state.value.zeroTime() != scheduledFor) return
+        notifications.showZeroAlert(store.state.value)
+        widgets.update() // the widget's clock turns red / back to normal at zero
     }
 
-    private fun refresh(s: TimerState, now: Long) {
+    private suspend fun refresh(s: TimerState, now: Long) {
         val zero = s.nextZeroCrossing(now)
         if (zero != null) alarms.set(Alarms.TIMER_ZERO, zero) else alarms.cancel(Alarms.TIMER_ZERO)
         // Inexact is fine: the logged value is computed for exact midnight whenever this fires.
         alarms.set(Alarms.DAY_END, nextMidnight(now, ZoneId.systemDefault()), exact = false)
         notifications.showTimer(s)
+        widgets.update()
     }
 }

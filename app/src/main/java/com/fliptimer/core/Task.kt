@@ -36,9 +36,19 @@ data class Task(
     fun nextReminder(now: Long): ReminderFire? =
         if (isComplete) null else nextReminder(deadline, reminders, now)
 
-    /** When this task next needs attention: its next reminder, or a recurring task's deadline. */
-    fun nextAlarm(now: Long): Long? =
-        listOfNotNull(nextReminder(now)?.at, deadline?.takeIf { isRecurring && it > now }).minOrNull()
+    /**
+     * When this task next needs attention: its next reminder, entering the 24-hour "due soon"
+     * window, or its deadline (to turn overdue, or for a recurring task, to reset).
+     */
+    fun nextAlarm(now: Long): Long? {
+        val d = deadline
+        val candidates = listOfNotNull(
+            nextReminder(now)?.at,
+            d?.takeIf { !isComplete || isRecurring },
+            d?.minus(TaskLists.DUE_SOON_WINDOW_MS)?.takeIf { !isComplete },
+        )
+        return candidates.filter { it > now }.minOrNull()
+    }
 
     /**
      * Once a recurring task's deadline passes, it starts over: progress back to 0

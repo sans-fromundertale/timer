@@ -75,6 +75,15 @@ class RepeatTest {
         assertNull(oneOff.nextAlarm(at(2026, 11, 1)))
     }
 
+    @Test fun nextAlarmWakesForDueSoonWindowAndDeadline() {
+        val hour = 3_600_000L
+        val due = at(2026, 11, 6)
+        val t = Task(deadline = due, reminders = emptySet())
+        assertEquals(due - 24 * hour, t.nextAlarm(due - 30 * hour)) // enters "due soon"
+        assertEquals(due, t.nextAlarm(due - 2 * hour)) // turns overdue
+        assertNull(t.nextAlarm(due))
+    }
+
     @Test fun listsKeepDoneRecurringTasksActive() {
         val now = at(2026, 11, 6, 0)
         val doneRecurring = Task(id = 1, createdAt = 1).withSchedule(now + 3_600_000, weekly).withProgress(100, now)

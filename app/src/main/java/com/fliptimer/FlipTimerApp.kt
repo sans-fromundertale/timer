@@ -12,6 +12,7 @@ import com.fliptimer.data.TaskRepository
 import com.fliptimer.data.TimerStore
 import com.fliptimer.system.Alarms
 import com.fliptimer.system.Notifications
+import com.fliptimer.system.WidgetUpdater
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -40,9 +41,12 @@ class AppGraph(app: Application) {
     private val alarms = Alarms(app)
     private val timerStore = TimerStore(app)
 
+    private val taskRepo = TaskRepository(db.taskDao())
+
+    val widgets = WidgetUpdater(app, timerState = { timerStore.state.value }, tasks = { taskRepo.all() })
     val dayLog = DayLogRepository(db.dayEndDao(), timerStore)
-    val timer = TimerController(timerStore, dayLog, alarms, notifications, scope)
-    val tasks = TaskController(TaskRepository(db.taskDao()), alarms, notifications, scope)
+    val timer = TimerController(timerStore, dayLog, alarms, notifications, widgets, scope)
+    val tasks = TaskController(taskRepo, alarms, notifications, widgets, scope)
 
     /** Re-derive every alarm and notification from saved state (app open, boot, update). */
     suspend fun syncAll() {
